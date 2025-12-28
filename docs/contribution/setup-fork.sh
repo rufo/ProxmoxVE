@@ -81,12 +81,10 @@ detect_username() {
 detect_repo_name() {
     local remote_url
 
-    if ! remote_url=$(git config --get remote.origin.url 2>/dev/null); then
-        return 1
-    fi
+    remote_url=$(git remote get-url origin 2>/dev/null) || return 1
 
     # Extract repo name (remove .git if present)
-    if [[ $remote_url =~ /([^/]+?)(.git)?$ ]]; then
+    if [[ $remote_url =~ /([^/]+)(\.git)?$ ]]; then
         local repo="${BASH_REMATCH[1]}"
         echo "${repo%.git}"
     else
@@ -99,7 +97,7 @@ confirm() {
     local prompt="$1"
     local response
 
-    read -p "$(echo -e ${YELLOW})$prompt (y/n)${NC} " -r response
+    read -p "$(echo -e ${YELLOW})$prompt (y/n)$(echo -e ${NC}) " -r response
     [[ $response =~ ^[Yy]$ ]]
 }
 
@@ -139,7 +137,7 @@ update_links() {
                 cp "$file" "$file.backup"
 
                 # Replace links
-                sed -i "s|github.com/$old_repo/$old_name|github.com/$new_owner/$new_repo|g" "$file"
+                sed -i '' "s|github.com/$old_repo/$old_name|github.com/$new_owner/$new_repo|g" "$file"
 
                 ((files_updated++))
                 print_success "Updated $file ($count links)"
